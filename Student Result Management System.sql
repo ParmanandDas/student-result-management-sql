@@ -43,7 +43,7 @@ SELECT * FROM Exams;
 ---------------- Marks Table ----------------------------
 
 CREATE TABLE Marks (
-    MarkID INT PRIMARY KEY IDENTITY(1,1),
+    MarksID INT PRIMARY KEY IDENTITY(1,1),
     StudentID INT NOT NULL,
     SubjectID INT NOT NULL,
     ExamID INT NOT NULL,
@@ -110,3 +110,118 @@ VALUES
 SELECT * FROM Marks;
 
 
+--------------- First JOIN Query -----------------------------
+
+
+SELECT 
+    s.FirstName,
+    s.LastName,
+    sub.SubjectName,
+    e.ExamName,
+    m.MarksObtained
+FROM Marks m
+JOIN Students s ON m.StudentID = s.StudentID
+JOIN Subjects sub ON m.SubjectID = sub.SubjectID
+JOIN Exams e ON m.ExamID = e.ExamID;
+
+
+--------------- Average Marks Per Student ------------------------
+
+SELECT s.FirstName,
+       s.LastName,
+       SUM(m.MarksObtained) AS TotalMarks
+FROM Marks m
+JOIN Students s
+     ON m.StudentID = s.StudentID
+GROUP BY 
+      s.FirstName,
+      s.LastName;
+
+
+
+---------------------- Find Topper (Highest Total Marks) ---------------------------------
+
+
+SELECT TOP 1 
+         s.FirstName,
+         SUM(m.MarksObtained) AS TotalMarks
+FROM Marks m
+JOIN Students s
+     ON m.StudentID = s.StudentID
+     GROUP BY s.FirstName
+     ORDER BY TotalMarks DESC;
+
+
+------------ Find Failed Students (< 35 in Any Subject) ---------------------
+
+SELECT s.FirstName,
+       sub.SubjectName,
+       m.MarksObtained
+FROM Marks m
+JOIN Students s
+     ON m.studentID = s.StudentID
+JOIN Subjects sub
+     ON m.SubjectID = sub.SubjectID
+WHERE m.MarksObtained < 35; 
+
+
+-------------------- Add Grade Using CASE (Very Important)  -------------------
+
+SELECT 
+    s.FirstName,
+    sub.SubjectName,
+    m.MarksObtained,
+    CASE 
+        WHEN m.MarksObtained >= 90 THEN 'A'
+        WHEN m.MarksObtained >= 75 THEN 'B'
+        WHEN m.MarksObtained >= 50 THEN 'C'
+        ELSE 'Fail'
+    END AS Grade
+FROM Marks m
+JOIN Students s 
+    ON m.StudentID = s.StudentID
+JOIN Subjects sub
+    ON m.SubjectID = sub.SubjectID;
+
+
+------------------------- Pehle Total Marks Per Student Per Exam ------------------------------
+
+
+SELECT 
+    s.StudentID,
+    s.FirstName,
+    e.ExamName,
+    SUM(m.MarksObtained) AS TotalMarks
+FROM Marks m
+JOIN Students s 
+    ON m.StudentID = s.StudentID
+JOIN Exams e
+    ON m.ExamID = e.ExamID
+GROUP BY 
+    s.StudentID,
+    s.FirstName,
+    e.ExamName;
+
+
+--------------- Add Rank (Window Function) -------------------
+
+
+
+      SELECT 
+    s.StudentID,
+    s.FirstName,
+    e.ExamName,
+    SUM(m.MarksObtained) AS TotalMarks,
+    RANK() OVER (
+        PARTITION BY e.ExamName
+        ORDER BY SUM(m.MarksObtained) DESC
+    ) AS StudentRank
+FROM Marks m
+JOIN Students s 
+    ON m.StudentID = s.StudentID
+JOIN Exams e
+    ON m.ExamID = e.ExamID
+GROUP BY 
+    s.StudentID,
+    s.FirstName,
+    e.ExamName;
